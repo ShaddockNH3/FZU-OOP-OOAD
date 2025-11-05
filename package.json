@@ -1,0 +1,29 @@
+{
+  "name": "basketball-game-visualizer",
+  "version": "1.0.0",
+  "description": "体育赛事直播可视化系统 - 篮球比赛重现",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "basketball",
+    "visualization",
+    "pixi.js",
+    "typescript",
+    "oop"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8"
+  },
+  "dependencies": {
+    "pixi.js": "^7.3.2",
+    "xlsx": "^0.18.5"
+  }
+}
