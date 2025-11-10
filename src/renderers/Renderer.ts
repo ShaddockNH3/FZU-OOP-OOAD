@@ -15,8 +15,10 @@ export class Renderer {
   private courtWidth: number;
   private courtHeight: number;
   private ballInMotion: boolean = false;
+  private homeTeamName: string = '主队';
+  private awayTeamName: string = '客队';
 
-  constructor(container: HTMLElement) {
+  constructor(container: HTMLElement, homeTeamName?: string, awayTeamName?: string) {
     // 创建PixiJS应用
     this.app = new PIXI.Application({
       width: container.clientWidth,
@@ -24,6 +26,9 @@ export class Renderer {
       backgroundColor: 0x1a472a, // 篮球场绿色
       antialias: true
     });
+
+    if (homeTeamName) this.homeTeamName = homeTeamName;
+    if (awayTeamName) this.awayTeamName = awayTeamName;
 
     container.appendChild(this.app.view as HTMLCanvasElement);
 
@@ -302,8 +307,8 @@ export class Renderer {
     const startX = playerSprite.position.x;
     const startY = playerSprite.position.y;
     
-    // 判断投向哪个篮筐
-    const isHomeTeam = event.teamName === '洛杉矶湖人';
+    // 判断投向哪个篮筐 - 使用存储的队伍名称
+    const isHomeTeam = event.teamName === this.homeTeamName;
     const padding = 50;
     const hoopDistance = 40;
     const targetX = isHomeTeam ? this.courtWidth - padding - hoopDistance : padding + hoopDistance;

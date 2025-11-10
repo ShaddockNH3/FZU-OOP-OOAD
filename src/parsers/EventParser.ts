@@ -14,13 +14,22 @@ import {
 } from '../models/GameEvent';
 
 /**
+ * 解析结果接口
+ */
+export interface ParseResult {
+  events: GameEvent[];
+  homeTeamName: string;
+  awayTeamName: string;
+}
+
+/**
  * 事件解析器 - 负责读取XLSX文件并转换成GameEvent对象数组
  */
 export class EventParser {
   /**
    * 解析XLSX文件
    */
-  static async parseXLSX(file: File): Promise<GameEvent[]> {
+  static async parseXLSX(file: File): Promise<ParseResult> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -28,8 +37,8 @@ export class EventParser {
         try {
           const data = e.target?.result;
           const workbook = XLSX.read(data, { type: 'binary' });
-          const events = this.extractEventsFromWorkbook(workbook);
-          resolve(events);
+          const result = this.extractEventsFromWorkbook(workbook);
+          resolve(result);
         } catch (error) {
           reject(error);
         }
@@ -46,11 +55,30 @@ export class EventParser {
   /**
    * 从工作簿中提取事件
    */
-  private static extractEventsFromWorkbook(workbook: XLSX.WorkBook): GameEvent[] {
+  private static extractEventsFromWorkbook(workbook: XLSX.WorkBook): ParseResult {
     const events: GameEvent[] = [];
     let eventId = 1;
+    let homeTeamName = '主队';
+    let awayTeamName = '客队';
 
     console.log('可用的工作表:', Object.keys(workbook.Sheets));
+
+    // 从第一个工作表(c1)读取队伍名称
+    const firstSheet = workbook.Sheets['c1'];
+    if (firstSheet) {
+      const rows = XLSX.utils.sheet_to_json(firstSheet, { 
+        header: 1, 
+        defval: '',
+        raw: false
+      }) as any[][];
+      
+      // 第2行(索引1)包含队伍名称: [时间, 主队名, 比分, 客队名]
+      if (rows.length > 1 && rows[1].length >= 4) {
+        homeTeamName = rows[1][1] ? String(rows[1][1]).trim() : '主队';
+        awayTeamName = rows[1][3] ? String(rows[1][3]).trim() : '客队';
+        console.log(`✅ 队伍名称: ${homeTeamName} vs ${awayTeamName}`);
+      }
+    }
 
     // 遍历四节比赛 (c1, c2, c3, c4)
     for (let quarter = 1; quarter <= 4; quarter++) {
@@ -101,20 +129,24 @@ export class EventParser {
 
         // 解析主队事件
         if (homeAction) {
-          const event = this.parseAction(eventId++, timestamp, quarter, '洛杉矶湖人', homeAction, score);
+          const event = this.parseAction(eventId++, timestamp, quarter, homeTeamName, homeAction, score);
           if (event) events.push(event);
         }
 
         // 解析客队事件
         if (awayAction) {
-          const event = this.parseAction(eventId++, timestamp, quarter, '明尼苏达森林狼', awayAction, score);
+          const event = this.parseAction(eventId++, timestamp, quarter, awayTeamName, awayAction, score);
           if (event) events.push(event);
         }
       }
     }
 
     console.log(`总共解析到 ${events.length} 个事件`);
-    return events.sort((a, b) => a.eventId - b.eventId);
+    return {
+      events: events.sort((a, b) => a.eventId - b.eventId),
+      homeTeamName,
+      awayTeamName
+    };
   }
 
   /**

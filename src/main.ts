@@ -198,18 +198,47 @@ class App {
         this.updateProgress(current, total);
       }
     });
+
+    const loadMatch1Btn = document.getElementById('load-match1');
+    loadMatch1Btn?.addEventListener('click', () => {
+      this.loadMatchFile('/match.xlsx');
+    });
+
+    const loadMatch2Btn = document.getElementById('load-match2');
+    loadMatch2Btn?.addEventListener('click', () => {
+      this.loadMatchFile('/match2.xlsx');
+    });
+
+    const loadCustomBtn = document.getElementById('load-custom');
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    loadCustomBtn?.addEventListener('click', () => {
+      fileInput?.click();
+    });
+
+    fileInput?.addEventListener('change', async (e) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      if (file) {
+        try {
+          this.uiManager.showLoading('正在加载比赛数据...');
+          await this.loadGame(file);
+          this.uiManager.hideLoading();
+          console.log('✅ 自定义比赛加载成功!');
+        } catch (error) {
+          console.error('❌ 加载失败:', error);
+          this.uiManager.showError(`加载比赛数据失败: ${error}`);
+        }
+      }
+      target.value = '';
+    });
   }
 
-  /**
-   * 加载默认比赛数据
-   */
-  private async loadDefaultGame(): Promise<void> {
+  private async loadMatchFile(path: string): Promise<void> {
     try {
       this.uiManager.showLoading('正在加载比赛数据...');
-      console.log('开始加载 match.xlsx...');
+      console.log(`开始加载 ${path}...`);
 
-      // 加载match.xlsx
-      const response = await fetch('/match.xlsx');
+      const response = await fetch(path);
       console.log('fetch 响应状态:', response.status, response.statusText);
       
       if (!response.ok) {
@@ -219,8 +248,7 @@ class App {
       const blob = await response.blob();
       console.log('文件大小:', blob.size, 'bytes');
       
-      const file = new File([blob], 'match.xlsx');
-
+      const file = new File([blob], path.split('/').pop() || 'match.xlsx');
       await this.loadGame(file);
 
       this.uiManager.hideLoading();
@@ -231,33 +259,38 @@ class App {
     }
   }
 
-  /**
-   * 加载比赛数据
-   */
+  private async loadDefaultGame(): Promise<void> {
+    await this.loadMatchFile('/match.xlsx');
+  }
+
   private async loadGame(file: File): Promise<void> {
     try {
-      // 解析XLSX文件
-      const events = await EventParser.parseXLSX(file);
-      console.log(`解析到 ${events.length} 个事件`);
+      const result = await EventParser.parseXLSX(file);
+      console.log(`解析到 ${result.events.length} 个事件`);
+      console.log(`队伍: ${result.homeTeamName} vs ${result.awayTeamName}`);
 
-      // 加载到游戏对象
-      this.game.loadGame(events);
+      // 更新 Game 实例的队伍名称
+      this.game = new Game(result.homeTeamName, result.awayTeamName);
+      
+      // 重新设置游戏回调
+      this.setupGameCallbacks();
+      
+      this.game.loadGame(result.events);
 
-      // 初始化渲染器
       const canvas = document.getElementById('game-canvas');
       if (canvas) {
         if (this.renderer) {
           this.renderer.destroy();
         }
-        this.renderer = new Renderer(canvas);
+        this.renderer = new Renderer(canvas, result.homeTeamName, result.awayTeamName);
         
-        // 绘制球员
         const homePlayers = this.game.homeTeam.getAllPlayers();
         const awayPlayers = this.game.awayTeam.getAllPlayers();
         this.renderer.drawPlayers(homePlayers, awayPlayers);
       }
 
-      // 初始化UI显示
+      // 更新 UI 中的队伍名称
+      this.uiManager.updateTeamNames(result.homeTeamName, result.awayTeamName);
       this.uiManager.updateScore(0, 0);
       this.uiManager.updateTime('第1节 12:00');
       this.updateUI();
@@ -269,16 +302,12 @@ class App {
     }
   }
 
-  /**
-   * 更新UI
-   */
   private updateUI(): void {
     this.uiManager.updateTeamStats(this.game.homeTeam, this.game.awayTeam);
     this.uiManager.updatePlayerStats(this.game.homeTeam, this.game.awayTeam);
   }
 }
 
-// 创建应用实例
 window.addEventListener('DOMContentLoaded', () => {
   new App();
 });
