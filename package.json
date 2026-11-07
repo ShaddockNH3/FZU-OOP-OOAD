@@ -1,29 +1,40 @@
 {
-  "name": "basketball-game-visualizer",
-  "version": "1.0.0",
-  "description": "体育赛事直播可视化系统 - 篮球比赛重现",
-  "main": "index.html",
+  "name": "fzu-oop-ooad",
+  "version": "2.0.0",
+  "description": "篮球比赛事件回放系统 - 分层重构版",
+  "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "vue-tsc --noEmit"
   },
   "keywords": [
     "basketball",
     "visualization",
     "pixi.js",
+    "vue",
     "typescript",
     "oop"
   ],
-  "author": "",
+  "author": "ShaddockNH3",
   "license": "MIT",
-  "devDependencies": {
-    "@types/node": "^20.10.0",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.8"
-  },
   "dependencies": {
-    "pixi.js": "^7.3.2",
+    "@phosphor-icons/vue": "^2.2.1",
+    "naive-ui": "^2.45.3",
+    "pixi.js": "^8.22.0",
+    "vue": "^3.5.45",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0",
+    "vue-tsc": "^3.3.14"
   }
 }
